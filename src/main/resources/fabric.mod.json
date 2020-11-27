@@ -1,0 +1,24 @@
+{
+	"schemaVersion": 1,
+	"id": "downpour",
+	"version": "${version}",
+	"name": "Downpour",
+	"description": "A cover-finding minigame for Minecraft.",
+	"authors": [
+		"haykam821"
+	],
+	"contact": {
+		"homepage": "https://github.com/haykam821/Downpour#readme",
+		"issues": "https://github.com/haykam821/Downpour/issues"
+	},
+	"entrypoints": {
+		"main": [
+			"io.github.haykam821.downpour.Main"
+		]
+	},
+	"license": "MIT",
+	"icon": "assets/downpour/icon.png",
+	"depends": {
+		"fabricloader": ">=0.4.0"
+	}
+}
