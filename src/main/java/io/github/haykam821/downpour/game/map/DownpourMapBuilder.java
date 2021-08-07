@@ -6,6 +6,7 @@ import io.github.haykam821.downpour.game.DownpourConfig;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.biome.BiomeKeys;
 import xyz.nucleoid.plasmid.map.template.MapTemplate;
 import xyz.nucleoid.plasmid.util.BlockBounds;
 
@@ -25,6 +26,9 @@ public class DownpourMapBuilder {
 	public DownpourMap create() {
 		MapTemplate template = MapTemplate.createEmpty();
 		DownpourMapConfig mapConfig = this.config.getMapConfig();
+
+		// Must be a biome that allows for rain
+		template.setBiome(BiomeKeys.PLAINS);
 
 		BlockBounds bounds = new BlockBounds(BlockPos.ORIGIN, new BlockPos(mapConfig.getX() + 1, 4, mapConfig.getZ() + 1));
 		this.build(bounds, template, mapConfig);
