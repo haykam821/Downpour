@@ -96,6 +96,7 @@ public class DownpourActivePhase {
 
  		for (PlayerRef playerRef : this.players) {
 			playerRef.ifOnline(this.world, player -> {
+				this.updateRoundsExperienceLevel(player);
 				player.setGameMode(GameMode.ADVENTURE);
 				DownpourActivePhase.spawn(this.world, this.map, player);
 			});
@@ -118,6 +119,17 @@ public class DownpourActivePhase {
 		return new TranslatableText("text.downpour.knockback_enabled").formatted(Formatting.RED);
 	}
 
+	private void updateRoundsExperienceLevel(ServerPlayerEntity player) {
+		player.setExperienceLevel(this.rounds + 1);
+	}
+
+	private void setRounds(int rounds) {
+		this.rounds = rounds;
+		for (ServerPlayerEntity player : this.gameSpace.getPlayers()) {
+			this.updateRoundsExperienceLevel(player);
+		}
+	}
+
 	private void tick() {
 		this.ticksUntilSwitch -= 1;
 		this.timerBar.tick(this);
@@ -127,7 +139,7 @@ public class DownpourActivePhase {
 				this.shelter.clear(this.world);
 				this.createShelter();
 
-				this.rounds += 1;
+				this.setRounds(this.rounds + 1);
 				if (this.rounds == this.config.getNoKnockbackRounds()) {
 					this.gameSpace.getPlayers().sendMessage(this.getKnockbackEnabledText());
 				}
@@ -187,7 +199,9 @@ public class DownpourActivePhase {
 		player.setGameMode(GameMode.SPECTATOR);
 	}
 
-	private void addPlayer(PlayerEntity player) {
+	private void addPlayer(ServerPlayerEntity player) {
+		this.updateRoundsExperienceLevel(player);
+
 		if (!this.players.contains(PlayerRef.of(player))) {
 			this.setSpectator(player);
 		} else if (this.opened) {
