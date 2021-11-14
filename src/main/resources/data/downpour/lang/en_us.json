@@ -1,4 +1,5 @@
 {
+	"game.downpour.standard_downpour": "Downpour",
 	"gameType.downpour.downpour": "Downpour",
 	"text.downpour.eliminated": "%s has been eliminated!",
 	"text.downpour.eliminated.out_of_bounds": "%s has been eliminated by going out of bounds!",

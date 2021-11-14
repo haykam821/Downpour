@@ -20,7 +20,7 @@ public class Shelter {
 		int upperRadius = (int) Math.ceil(size / (float) 2);
 		int lowerRadius = (int) Math.floor(size / (float) 2);
 		this.box = new BlockBox(pos.getX() - lowerRadius, pos.getY(), pos.getZ() - lowerRadius, pos.getX() + upperRadius, pos.getY() + 6, pos.getZ() + upperRadius);
-		this.outerBox = new BlockBox(this.box.minX - 1, this.box.minY, this.box.minZ - 1, this.box.maxX + 1, this.box.maxY, this.box.maxZ + 1);
+		this.outerBox = new BlockBox(this.box.getMinX() - 1, this.box.getMinY(), this.box.getMinZ() - 1, this.box.getMaxX() + 1, this.box.getMaxY(), this.box.getMaxZ() + 1);
 
 		this.locked = locked;
 	}
@@ -38,18 +38,18 @@ public class Shelter {
 	}
 
 	private Iterable<BlockPos> iterateOuter() {
-		return BlockPos.iterate(this.outerBox.minX, this.outerBox.minY, this.outerBox.minZ, this.outerBox.maxX, this.outerBox.maxY, this.outerBox.maxZ);
+		return BlockPos.iterate(this.outerBox.getMinX(), this.outerBox.getMinY(), this.outerBox.getMinZ(), this.outerBox.getMaxX(), this.outerBox.getMaxY(), this.outerBox.getMaxZ());
 	}
 
 	public void build(ServerWorld world) {
 		for (BlockPos pos : this.iterateOuter()) {
 			if (!this.box.contains(pos)) {
-				if (this.locked && pos.getY() != this.box.maxY) {
+				if (this.locked && pos.getY() != this.box.getMaxY()) {
 					world.setBlockState(pos, GLASS);
 				}
-			} else if (pos.getY() == this.box.minY) {
+			} else if (pos.getY() == this.box.getMinY()) {
 				world.setBlockState(pos, FLOOR);
-			} else if (pos.getY() == this.box.maxY) {
+			} else if (pos.getY() == this.box.getMaxY()) {
 				world.setBlockState(pos, ROOF);
 			}
 		}

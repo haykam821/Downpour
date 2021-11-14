@@ -5,8 +5,8 @@ import net.minecraft.entity.boss.BossBar;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
-import xyz.nucleoid.plasmid.widget.BossBarWidget;
-import xyz.nucleoid.plasmid.widget.GlobalWidgets;
+import xyz.nucleoid.plasmid.game.common.GlobalWidgets;
+import xyz.nucleoid.plasmid.game.common.widget.BossBarWidget;
 
 public class DownpourTimerBar {
 	private static final Text TITLE = new TranslatableText("gameType.downpour.downpour").formatted(Formatting.AQUA);
@@ -20,9 +20,5 @@ public class DownpourTimerBar {
 	public void tick(DownpourActivePhase phase) {
 		float percent = phase.getTimerBarPercent();
 		this.bar.setProgress(percent);
-	}
-
-	public void remove() {
-		this.bar.close();
 	}
 }

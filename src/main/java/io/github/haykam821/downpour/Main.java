@@ -10,7 +10,7 @@ public class Main implements ModInitializer {
 	private static final String MOD_ID = "downpour";
 
 	private static final Identifier DOWNPOUR_ID = new Identifier(MOD_ID, "downpour");
-	public static final GameType<DownpourConfig> DOWNPOUR_TYPE = GameType.register(DOWNPOUR_ID, DownpourWaitingPhase::open, DownpourConfig.CODEC);
+	public static final GameType<DownpourConfig> DOWNPOUR_TYPE = GameType.register(DOWNPOUR_ID, DownpourConfig.CODEC, DownpourWaitingPhase::open);
 
 	@Override
 	public void onInitialize() {

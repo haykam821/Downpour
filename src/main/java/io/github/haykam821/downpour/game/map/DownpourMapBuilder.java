@@ -7,8 +7,8 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.biome.BiomeKeys;
-import xyz.nucleoid.plasmid.map.template.MapTemplate;
-import xyz.nucleoid.plasmid.util.BlockBounds;
+import xyz.nucleoid.map_templates.BlockBounds;
+import xyz.nucleoid.map_templates.MapTemplate;
 
 public class DownpourMapBuilder {
 	private static final BlockState FLOOR = Blocks.COARSE_DIRT.getDefaultState();
@@ -30,16 +30,16 @@ public class DownpourMapBuilder {
 		// Must be a biome that allows for rain
 		template.setBiome(BiomeKeys.PLAINS);
 
-		BlockBounds bounds = new BlockBounds(BlockPos.ORIGIN, new BlockPos(mapConfig.getX() + 1, 4, mapConfig.getZ() + 1));
+		BlockBounds bounds = BlockBounds.of(BlockPos.ORIGIN, new BlockPos(mapConfig.getX() + 1, 4, mapConfig.getZ() + 1));
 		this.build(bounds, template, mapConfig);
 
-		BlockBounds shelterBounds = new BlockBounds(new BlockPos(5, 1, 5), new BlockPos(mapConfig.getX() - 4, 1, mapConfig.getZ() - 4));
+		BlockBounds shelterBounds = BlockBounds.of(new BlockPos(5, 1, 5), new BlockPos(mapConfig.getX() - 4, 1, mapConfig.getZ() - 4));
 		return new DownpourMap(template, bounds, shelterBounds);
 	}
 
 	private BlockState getBlockState(BlockPos pos, BlockBounds bounds, DownpourMapConfig mapConfig) {
-		int layer = pos.getY() - bounds.getMin().getY();
-		boolean outline = pos.getX() == bounds.getMin().getX() || pos.getX() == bounds.getMax().getX() || pos.getZ() == bounds.getMin().getZ() || pos.getZ() == bounds.getMax().getZ();
+		int layer = pos.getY() - bounds.min().getY();
+		boolean outline = pos.getX() == bounds.min().getX() || pos.getX() == bounds.max().getX() || pos.getZ() == bounds.min().getZ() || pos.getZ() == bounds.max().getZ();
 
 		if (outline) {
 			if (layer == 0) {
