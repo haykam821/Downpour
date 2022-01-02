@@ -204,20 +204,27 @@ public class DownpourActivePhase {
 		this.eliminate(player, true);
 	}
 
-	private void eliminate(ServerPlayerEntity eliminatedPlayer, String suffix, boolean remove) {
+	private boolean eliminate(ServerPlayerEntity eliminatedPlayer, String suffix, boolean remove) {
+		PlayerRef eliminatedRef = PlayerRef.of(eliminatedPlayer);
+		if (!this.players.contains(eliminatedRef)) {
+			return false;
+		}
+
 		Text message = new TranslatableText("text.downpour.eliminated" + suffix, eliminatedPlayer.getDisplayName()).formatted(Formatting.RED);
 		for (ServerPlayerEntity player : this.gameSpace.getPlayers()) {
 			player.sendMessage(message, false);
 		}
 
 		if (remove) {
-			this.players.remove(PlayerRef.of(eliminatedPlayer));
+			this.players.remove(eliminatedRef);
 		}
 		this.setSpectator(eliminatedPlayer);
+
+		return true;
 	}
 
-	private void eliminate(ServerPlayerEntity eliminatedPlayer, boolean remove) {
-		this.eliminate(eliminatedPlayer, "", remove);
+	private boolean eliminate(ServerPlayerEntity eliminatedPlayer, boolean remove) {
+		return this.eliminate(eliminatedPlayer, "", remove);
 	}
 
 	private ActionResult onPlayerDamage(ServerPlayerEntity player, DamageSource source, float amount) {
@@ -225,9 +232,7 @@ public class DownpourActivePhase {
 	}
 
 	private ActionResult onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
-		if (this.players.contains(PlayerRef.of(player))) {
-			this.eliminate(player, true);
-		} else {
+		if (!this.eliminate(player, true)) {
 			DownpourActivePhase.spawn(this.world, this.map, player);
 		}
 		return ActionResult.FAIL;
