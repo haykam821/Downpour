@@ -4,20 +4,23 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import io.github.haykam821.downpour.Main;
 import io.github.haykam821.downpour.game.DownpourConfig;
 import io.github.haykam821.downpour.game.DownpourTimerBar;
 import io.github.haykam821.downpour.game.Shelter;
 import io.github.haykam821.downpour.game.map.DownpourMap;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Hand;
+import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
@@ -30,7 +33,11 @@ import xyz.nucleoid.plasmid.game.event.GamePlayerEvents;
 import xyz.nucleoid.plasmid.game.player.PlayerOffer;
 import xyz.nucleoid.plasmid.game.player.PlayerOfferResult;
 import xyz.nucleoid.plasmid.game.rule.GameRuleType;
+import xyz.nucleoid.plasmid.game.stats.GameStatisticBundle;
+import xyz.nucleoid.plasmid.game.stats.StatisticKey;
+import xyz.nucleoid.plasmid.game.stats.StatisticKeys;
 import xyz.nucleoid.plasmid.util.PlayerRef;
+import xyz.nucleoid.stimuli.event.player.PlayerAttackEntityEvent;
 import xyz.nucleoid.stimuli.event.player.PlayerDamageEvent;
 import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
 
@@ -41,8 +48,11 @@ public class DownpourActivePhase {
 	private final DownpourConfig config;
 	private final Set<PlayerRef> players;
 	private final DownpourTimerBar timerBar;
+	private final GameStatisticBundle statistics;
 	private boolean singleplayer;
+	private boolean closing;
 	private int rounds = 0;
+	private int ticksElapsed;
 	private int ticksUntilSwitch;
 	private Shelter shelter;
 
@@ -55,6 +65,8 @@ public class DownpourActivePhase {
 		this.timerBar = new DownpourTimerBar(widgets);
 		this.ticksUntilSwitch = this.config.getLockTime();
 		this.createShelter();
+
+		this.statistics = gameSpace.getStatistics().bundle(Main.MOD_ID);
 	}
 
 	public static void setRules(GameActivity activity) {
@@ -80,6 +92,7 @@ public class DownpourActivePhase {
 			activity.listen(GameActivityEvents.TICK, phase::tick);
 			activity.listen(GamePlayerEvents.OFFER, phase::offerPlayer);
 			activity.listen(GamePlayerEvents.REMOVE, phase::removePlayer);
+			activity.listen(PlayerAttackEntityEvent.EVENT, phase::onPlayerAttackEntity);
 			activity.listen(PlayerDamageEvent.EVENT, phase::onPlayerDamage);
 			activity.listen(PlayerDeathEvent.EVENT, phase::onPlayerDeath);
 		});
@@ -93,6 +106,10 @@ public class DownpourActivePhase {
 				this.updateRoundsExperienceLevel(player);
 				player.changeGameMode(GameMode.ADVENTURE);
 				DownpourActivePhase.spawn(this.world, this.map, player);
+
+				if (!this.singleplayer) {
+					this.statistics.forPlayer(player).increment(StatisticKeys.GAMES_PLAYED, 1);
+				}
 			});
 		}
 	}
@@ -117,14 +134,18 @@ public class DownpourActivePhase {
 		player.setExperienceLevel(this.rounds + 1);
 	}
 
-	private void setRounds(int rounds) {
-		this.rounds = rounds;
+	private void addRounds(int rounds) {
+		this.rounds += rounds;
+
 		for (ServerPlayerEntity player : this.gameSpace.getPlayers()) {
+			this.statistics.forPlayer(player).increment(Main.ROUNDS_SURVIVED, rounds);
 			this.updateRoundsExperienceLevel(player);
 		}
 	}
 
 	private void tick() {
+		this.ticksElapsed += 1;
+
 		this.ticksUntilSwitch -= 1;
 		this.timerBar.tick(this);
 		if (this.ticksUntilSwitch < 0) {
@@ -133,7 +154,7 @@ public class DownpourActivePhase {
 				this.shelter.clear(this.world);
 				this.createShelter();
 
-				this.setRounds(this.rounds + 1);
+				this.addRounds(1);
 				if (this.rounds == this.config.getNoKnockbackRounds()) {
 					this.gameSpace.getPlayers().sendMessage(this.getKnockbackEnabledText());
 				}
@@ -169,24 +190,35 @@ public class DownpourActivePhase {
 		if (this.players.size() < 2) {
 			if (this.players.size() == 1 && this.singleplayer) return;
 			
-			Text endingMessage = this.getEndingMessage();
-			for (ServerPlayerEntity player : this.gameSpace.getPlayers()) {
-				player.sendMessage(endingMessage, false);
+			ServerPlayerEntity winner = this.getWinner();
+			if (winner != null) {
+				this.applyPlayerFinishStatistics(winner, StatisticKeys.GAMES_WON);
 			}
 
+			Text endingMessage = this.getEndingMessage(winner);
+			this.gameSpace.getPlayers().sendMessage(endingMessage);
+
+			this.closing = true;
 			this.gameSpace.close(GameCloseReason.FINISHED);
 		}
 	}
 
-	private Text getEndingMessage() {
+	private ServerPlayerEntity getWinner() {
 		if (this.players.size() == 1) {
 			PlayerRef winnerRef = this.players.iterator().next();
 			if (winnerRef.isOnline(this.world)) {
-				PlayerEntity winner = winnerRef.getEntity(this.world);
-				return new TranslatableText("text.downpour.win", winner.getDisplayName(), this.rounds).formatted(Formatting.GOLD);
+				return winnerRef.getEntity(this.world);
 			}
 		}
-		return new TranslatableText("text.downpour.no_winners", this.rounds).formatted(Formatting.GOLD);
+		return null;
+	}
+
+	private Text getEndingMessage(ServerPlayerEntity winner) {
+		if (winner == null) {
+			return new TranslatableText("text.downpour.no_winners", this.rounds).formatted(Formatting.GOLD);
+		} else {
+			return new TranslatableText("text.downpour.win", winner.getDisplayName(), this.rounds).formatted(Formatting.GOLD);
+		}
 	}
 
 	private void setSpectator(ServerPlayerEntity player) {
@@ -205,6 +237,8 @@ public class DownpourActivePhase {
 	}
 
 	private boolean eliminate(ServerPlayerEntity eliminatedPlayer, String suffix, boolean remove) {
+		if (this.closing) return false;
+
 		PlayerRef eliminatedRef = PlayerRef.of(eliminatedPlayer);
 		if (!this.players.contains(eliminatedRef)) {
 			return false;
@@ -220,11 +254,31 @@ public class DownpourActivePhase {
 		}
 		this.setSpectator(eliminatedPlayer);
 
+		this.applyPlayerFinishStatistics(eliminatedPlayer, StatisticKeys.GAMES_LOST);
+
 		return true;
 	}
 
 	private boolean eliminate(ServerPlayerEntity eliminatedPlayer, boolean remove) {
 		return this.eliminate(eliminatedPlayer, "", remove);
+	}
+
+	public void applyPlayerFinishStatistics(ServerPlayerEntity player, StatisticKey<Integer> finishTypeKey) {
+		if (!this.singleplayer) {
+			this.statistics.forPlayer(player).increment(finishTypeKey, 1);
+			this.statistics.forPlayer(player).set(StatisticKeys.LONGEST_TIME, this.ticksElapsed);
+		}
+	}
+
+	private ActionResult onPlayerAttackEntity(ServerPlayerEntity attacker, Hand hand, Entity attacked, EntityHitResult hitResult) {
+		if (attacker != attacked && this.players.contains(PlayerRef.of(attacker))) {
+			ServerPlayerEntity attackedPlayer = (ServerPlayerEntity) attacked;
+			if (this.players.contains(PlayerRef.of(attackedPlayer))) {
+				this.statistics.forPlayer(attacker).increment(Main.PLAYERS_PUNCHED, 1);
+			}
+		}
+
+		return ActionResult.PASS;
 	}
 
 	private ActionResult onPlayerDamage(ServerPlayerEntity player, DamageSource source, float amount) {

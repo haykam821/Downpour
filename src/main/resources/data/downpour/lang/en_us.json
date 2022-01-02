@@ -1,10 +1,13 @@
 {
 	"game.downpour.standard_downpour": "Downpour",
 	"gameType.downpour.downpour": "Downpour",
+	"statistic.bundle.downpour": "Downpour",
+	"statistic.downpour.players_punched": "Players punched",
+	"statistic.downpour.rounds_survived": "Rounds survived",
 	"text.downpour.eliminated": "%s has been eliminated!",
 	"text.downpour.eliminated.out_of_bounds": "%s has been eliminated by going out of bounds!",
 	"text.downpour.eliminated.out_of_shelter": "%s has been eliminated by the downpour!",
-	"text.downpour.no_winners": "Nobody won the game after %s rounds!",
 	"text.downpour.knockback_enabled": "Knockback has been enabled!",
+	"text.downpour.no_winners": "Nobody won the game after %s rounds!",
 	"text.downpour.win": "%s has won the game after %s rounds!"
 }
