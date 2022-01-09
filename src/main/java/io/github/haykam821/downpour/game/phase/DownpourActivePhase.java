@@ -138,8 +138,11 @@ public class DownpourActivePhase {
 		this.rounds += rounds;
 
 		for (ServerPlayerEntity player : this.gameSpace.getPlayers()) {
-			this.statistics.forPlayer(player).increment(Main.ROUNDS_SURVIVED, rounds);
 			this.updateRoundsExperienceLevel(player);
+		}
+
+		for (PlayerRef player : this.players) {
+			this.statistics.forPlayer(player).increment(Main.ROUNDS_SURVIVED, rounds);
 		}
 	}
 
