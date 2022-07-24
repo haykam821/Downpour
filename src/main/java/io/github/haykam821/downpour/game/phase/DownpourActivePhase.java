@@ -16,7 +16,6 @@ import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
@@ -127,7 +126,7 @@ public class DownpourActivePhase {
 	}
 
 	private Text getKnockbackEnabledText() {
-		return new TranslatableText("text.downpour.knockback_enabled").formatted(Formatting.RED);
+		return Text.translatable("text.downpour.knockback_enabled").formatted(Formatting.RED);
 	}
 
 	private void updateRoundsExperienceLevel(ServerPlayerEntity player) {
@@ -218,9 +217,9 @@ public class DownpourActivePhase {
 
 	private Text getEndingMessage(ServerPlayerEntity winner) {
 		if (winner == null) {
-			return new TranslatableText("text.downpour.no_winners", this.rounds).formatted(Formatting.GOLD);
+			return Text.translatable("text.downpour.no_winners", this.rounds).formatted(Formatting.GOLD);
 		} else {
-			return new TranslatableText("text.downpour.win", winner.getDisplayName(), this.rounds).formatted(Formatting.GOLD);
+			return Text.translatable("text.downpour.win", winner.getDisplayName(), this.rounds).formatted(Formatting.GOLD);
 		}
 	}
 
@@ -247,7 +246,7 @@ public class DownpourActivePhase {
 			return false;
 		}
 
-		Text message = new TranslatableText("text.downpour.eliminated" + suffix, eliminatedPlayer.getDisplayName()).formatted(Formatting.RED);
+		Text message = Text.translatable("text.downpour.eliminated" + suffix, eliminatedPlayer.getDisplayName()).formatted(Formatting.RED);
 		for (ServerPlayerEntity player : this.gameSpace.getPlayers()) {
 			player.sendMessage(message, false);
 		}
