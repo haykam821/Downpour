@@ -1,7 +1,8 @@
 package io.github.haykam821.downpour.game.phase;
 
+import java.util.Collections;
 import java.util.Iterator;
-import java.util.Set;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import io.github.haykam821.downpour.Main;
@@ -9,6 +10,7 @@ import io.github.haykam821.downpour.game.DownpourConfig;
 import io.github.haykam821.downpour.game.DownpourTimerBar;
 import io.github.haykam821.downpour.game.Shelter;
 import io.github.haykam821.downpour.game.map.DownpourMap;
+import io.github.haykam821.downpour.game.map.DownpourMapConfig;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.effect.StatusEffectInstance;
@@ -46,7 +48,7 @@ public class DownpourActivePhase {
 	private final GameSpace gameSpace;
 	private final DownpourMap map;
 	private final DownpourConfig config;
-	private final Set<PlayerRef> players;
+	private final List<PlayerRef> players;
 	private final DownpourTimerBar timerBar;
 	private final GameStatisticBundle statistics;
 	private boolean singleplayer;
@@ -56,7 +58,7 @@ public class DownpourActivePhase {
 	private int ticksUntilSwitch;
 	private Shelter shelter;
 
-	public DownpourActivePhase(GameSpace gameSpace, ServerWorld world, DownpourMap map, DownpourConfig config, Set<PlayerRef> players, GlobalWidgets widgets) {
+	public DownpourActivePhase(GameSpace gameSpace, ServerWorld world, DownpourMap map, DownpourConfig config, List<PlayerRef> players, GlobalWidgets widgets) {
 		this.world = world;
 		this.gameSpace = gameSpace;
 		this.map = map;
@@ -82,7 +84,10 @@ public class DownpourActivePhase {
 	public static void open(GameSpace gameSpace, ServerWorld world, DownpourMap map, DownpourConfig config) {
 		gameSpace.setActivity(activity -> {
 			GlobalWidgets widgets = GlobalWidgets.addTo(activity);
-			Set<PlayerRef> players = gameSpace.getPlayers().stream().map(PlayerRef::of).collect(Collectors.toSet());
+
+			List<PlayerRef> players = gameSpace.getPlayers().stream().map(PlayerRef::of).collect(Collectors.toList());
+			Collections.shuffle(players);
+
 			DownpourActivePhase phase = new DownpourActivePhase(gameSpace, world, map, config, players, widgets);
 
 			DownpourActivePhase.setRules(activity);
@@ -99,18 +104,34 @@ public class DownpourActivePhase {
 	}
 
 	private void enable() {
+		int index = 0;
 		this.singleplayer = this.players.size() == 1;
 
+		DownpourMapConfig mapConfig = this.config.getMapConfig();
+		int spawnRadius = (Math.min(mapConfig.getX(), mapConfig.getZ()) - 4) / 2;
+
+		Vec3d center = DownpourActivePhase.getCenterSpawnPos(this.map);
+
  		for (PlayerRef playerRef : this.players) {
-			playerRef.ifOnline(this.world, player -> {
+			ServerPlayerEntity player = playerRef.getEntity(this.world);
+
+			if (player != null) {
 				this.updateRoundsExperienceLevel(player);
 				player.changeGameMode(GameMode.ADVENTURE);
-				DownpourActivePhase.spawn(this.world, this.map, player);
 
 				if (!this.singleplayer) {
 					this.statistics.forPlayer(player).increment(StatisticKeys.GAMES_PLAYED, 1);
 				}
-			});
+
+				double theta = ((double) index / this.players.size()) * 2 * Math.PI;
+				double x = center.getX() + Math.sin(theta) * spawnRadius;
+				double z = center.getZ() + Math.cos(theta) * spawnRadius;
+
+				Vec3d spawnPos = new Vec3d(x, center.getY(), z);
+				DownpourActivePhase.spawn(this.world, spawnPos, (float) theta - 180, player);
+			}
+
+			index++;
 		}
 	}
 
@@ -290,19 +311,22 @@ public class DownpourActivePhase {
 
 	private ActionResult onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
 		if (!this.eliminate(player, true)) {
-			DownpourActivePhase.spawn(this.world, this.map, player);
+			DownpourActivePhase.spawnAtCenter(this.world, this.map, player);
 		}
 		return ActionResult.FAIL;
 	}
 
-	public static void spawn(ServerWorld world, DownpourMap map, ServerPlayerEntity player) {
+	public static void spawn(ServerWorld world, Vec3d pos, float yaw, ServerPlayerEntity player) {
 		player.addStatusEffect(new StatusEffectInstance(StatusEffects.RESISTANCE, Integer.MAX_VALUE, 127, true, false));
-
-		Vec3d pos = DownpourActivePhase.getSpawnPos(map);
-		player.teleport(world, pos.getX(), pos.getY(), pos.getZ(), 0, 0);
+		player.teleport(world, pos.getX(), pos.getY(), pos.getZ(), yaw, 0);
 	}
 
-	public static Vec3d getSpawnPos(DownpourMap map) {
+	public static void spawnAtCenter(ServerWorld world, DownpourMap map, ServerPlayerEntity player) {
+		Vec3d pos = DownpourActivePhase.getCenterSpawnPos(map);
+		DownpourActivePhase.spawn(world, pos, 0, player);
+	}
+
+	public static Vec3d getCenterSpawnPos(DownpourMap map) {
 		Vec3d center = map.getBounds().center();
 		return new Vec3d(center.getX(), map.getShelterBounds().min().getY(), center.getZ());
 	}

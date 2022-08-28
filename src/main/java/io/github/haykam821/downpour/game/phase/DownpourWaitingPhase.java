@@ -57,7 +57,7 @@ public class DownpourWaitingPhase {
 	}
 
 	private PlayerOfferResult offerPlayer(PlayerOffer offer) {
-		return offer.accept(this.world, DownpourActivePhase.getSpawnPos(this.map)).and(() -> {
+		return offer.accept(this.world, DownpourActivePhase.getCenterSpawnPos(this.map)).and(() -> {
 			offer.player().changeGameMode(GameMode.ADVENTURE);
 		});
 	}
@@ -68,7 +68,7 @@ public class DownpourWaitingPhase {
 	}
 
 	private ActionResult onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
-		DownpourActivePhase.spawn(this.world, this.map, player);
+		DownpourActivePhase.spawnAtCenter(this.world, this.map, player);
 		return ActionResult.FAIL;
 	}
 }
