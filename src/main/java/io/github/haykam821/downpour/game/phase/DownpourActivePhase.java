@@ -24,6 +24,7 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
 import xyz.nucleoid.plasmid.game.GameActivity;
@@ -124,11 +125,13 @@ public class DownpourActivePhase {
 				}
 
 				double theta = ((double) index / this.players.size()) * 2 * Math.PI;
-				double x = center.getX() + Math.sin(theta) * spawnRadius;
-				double z = center.getZ() + Math.cos(theta) * spawnRadius;
+				float yaw = (float) theta * MathHelper.DEGREES_PER_RADIAN + 90;
+
+				double x = center.getX() + Math.cos(theta) * spawnRadius;
+				double z = center.getZ() + Math.sin(theta) * spawnRadius;
 
 				Vec3d spawnPos = new Vec3d(x, center.getY(), z);
-				DownpourActivePhase.spawn(this.world, spawnPos, (float) theta - 180, player);
+				DownpourActivePhase.spawn(this.world, spawnPos, yaw, player);
 			}
 
 			index++;
