@@ -13,7 +13,7 @@ public class DownpourConfig {
 		return instance.group(
 			DownpourMapConfig.CODEC.fieldOf("map").forGetter(DownpourConfig::getMapConfig),
 			PlayerConfig.CODEC.fieldOf("players").forGetter(DownpourConfig::getPlayerConfig),
-			SoundEvent.CODEC.optionalFieldOf("lock_sound", SoundEvents.BLOCK_NOTE_BLOCK_SNARE).forGetter(DownpourConfig::getLockSound),
+			SoundEvent.CODEC.optionalFieldOf("lock_sound", SoundEvents.BLOCK_NOTE_BLOCK_SNARE.value()).forGetter(DownpourConfig::getLockSound),
 			SoundEvent.CODEC.optionalFieldOf("unlock_sound", SoundEvents.ENTITY_LIGHTNING_BOLT_THUNDER).forGetter(DownpourConfig::getUnlockSound),
 			Codec.INT.optionalFieldOf("lock_time", 20 * 7).forGetter(DownpourConfig::getLockTime),
 			Codec.INT.optionalFieldOf("unlock_time", 20 * 2).forGetter(DownpourConfig::getUnlockTime),
