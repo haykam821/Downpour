@@ -1,5 +1,6 @@
 {
 	"type": "downpour:downpour",
+	"icon": "minecraft:lightning_rod",
 	"map": {
 		"x": 36,
 		"z": 36
