@@ -39,8 +39,7 @@ public class DownpourWaitingPhase {
 		DownpourMap map = mapBuilder.create();
 
 		RuntimeWorldConfig worldConfig = new RuntimeWorldConfig()
-			.setGenerator(map.createGenerator(context.server()))
-			.setRaining(true);
+			.setGenerator(map.createGenerator(context.server()));
 
 		return context.openWithWorld(worldConfig, (activity, world) -> {
 			DownpourWaitingPhase phase = new DownpourWaitingPhase(activity.getGameSpace(), world, map, context.config());

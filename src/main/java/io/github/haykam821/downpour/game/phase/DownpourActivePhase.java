@@ -104,6 +104,8 @@ public class DownpourActivePhase {
 	}
 
 	private void enable() {
+		this.world.setWeather(0, 0, true, false);
+
 		int index = 0;
 		this.singleplayer = this.players.size() == 1;
 
