@@ -52,10 +52,10 @@ public class DownpourActivePhase {
 	private final DownpourTimerBar timerBar;
 	private final GameStatisticBundle statistics;
 	private boolean singleplayer;
-	private boolean closing;
 	private int rounds = 0;
 	private int ticksElapsed;
 	private int ticksUntilSwitch;
+	private int ticksUntilClose = -1;
 	private Shelter shelter;
 
 	public DownpourActivePhase(GameSpace gameSpace, ServerWorld world, DownpourMap map, DownpourConfig config, List<PlayerRef> players, GlobalWidgets widgets) {
@@ -104,6 +104,8 @@ public class DownpourActivePhase {
 	}
 
 	private void enable() {
+		this.world.setWeather(0, 0, true, false);
+
 		int index = 0;
 		this.singleplayer = this.players.size() == 1;
 
@@ -170,6 +172,16 @@ public class DownpourActivePhase {
 	}
 
 	private void tick() {
+		// Decrease ticks until game end to zero
+		if (this.isGameEnding()) {
+			if (this.ticksUntilClose == 0) {
+				this.gameSpace.close(GameCloseReason.FINISHED);
+			}
+
+			this.ticksUntilClose -= 1;
+			return;
+		}
+
 		this.ticksElapsed += 1;
 
 		this.ticksUntilSwitch -= 1;
@@ -224,8 +236,7 @@ public class DownpourActivePhase {
 			Text endingMessage = this.getEndingMessage(winner);
 			this.gameSpace.getPlayers().sendMessage(endingMessage);
 
-			this.closing = true;
-			this.gameSpace.close(GameCloseReason.FINISHED);
+			this.ticksUntilClose = this.config.getTicksUntilClose().get(this.world.getRandom());
 		}
 	}
 
@@ -237,6 +248,10 @@ public class DownpourActivePhase {
 			}
 		}
 		return null;
+	}
+
+	private boolean isGameEnding() {
+		return this.ticksUntilClose >= 0;
 	}
 
 	private Text getEndingMessage(ServerPlayerEntity winner) {
@@ -263,7 +278,7 @@ public class DownpourActivePhase {
 	}
 
 	private boolean eliminate(ServerPlayerEntity eliminatedPlayer, String suffix, boolean remove) {
-		if (this.closing) return false;
+		if (this.isGameEnding()) return false;
 
 		PlayerRef eliminatedRef = PlayerRef.of(eliminatedPlayer);
 		if (!this.players.contains(eliminatedRef)) {
@@ -297,7 +312,7 @@ public class DownpourActivePhase {
 	}
 
 	private ActionResult onPlayerAttackEntity(ServerPlayerEntity attacker, Hand hand, Entity attacked, EntityHitResult hitResult) {
-		if (attacker != attacked && this.players.contains(PlayerRef.of(attacker))) {
+		if (!this.isGameEnding() && attacker != attacked && this.players.contains(PlayerRef.of(attacker))) {
 			ServerPlayerEntity attackedPlayer = (ServerPlayerEntity) attacked;
 			if (this.players.contains(PlayerRef.of(attackedPlayer))) {
 				this.statistics.forPlayer(attacker).increment(Main.PLAYERS_PUNCHED, 1);
