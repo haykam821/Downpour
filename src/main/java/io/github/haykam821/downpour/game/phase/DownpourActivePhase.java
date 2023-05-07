@@ -334,7 +334,7 @@ public class DownpourActivePhase {
 	}
 
 	public static void spawn(ServerWorld world, Vec3d pos, float yaw, ServerPlayerEntity player) {
-		player.addStatusEffect(new StatusEffectInstance(StatusEffects.RESISTANCE, Integer.MAX_VALUE, 127, true, false));
+		player.addStatusEffect(new StatusEffectInstance(StatusEffects.RESISTANCE, StatusEffectInstance.INFINITE, 127, true, false));
 		player.teleport(world, pos.getX(), pos.getY(), pos.getZ(), yaw, 0);
 	}
 
