@@ -1,5 +1,7 @@
 package io.github.haykam821.downpour.game;
 
+import java.util.Optional;
+
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
@@ -9,7 +11,9 @@ import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.intprovider.ConstantIntProvider;
 import net.minecraft.util.math.intprovider.IntProvider;
+import xyz.nucleoid.plasmid.game.GameSpace;
 import xyz.nucleoid.plasmid.game.common.config.PlayerConfig;
+import xyz.nucleoid.plasmid.game.stats.GameStatisticBundle;
 
 public class DownpourConfig {
 	public static final Codec<DownpourConfig> CODEC = RecordCodecBuilder.create(instance -> {
@@ -21,7 +25,8 @@ public class DownpourConfig {
 			SoundEvent.CODEC.optionalFieldOf("unlock_sound", SoundEvents.ENTITY_LIGHTNING_BOLT_THUNDER).forGetter(DownpourConfig::getUnlockSound),
 			Codec.INT.optionalFieldOf("lock_time", 20 * 7).forGetter(DownpourConfig::getLockTime),
 			Codec.INT.optionalFieldOf("unlock_time", 20 * 2).forGetter(DownpourConfig::getUnlockTime),
-			Codec.INT.optionalFieldOf("no_knockback_rounds", 2).forGetter(DownpourConfig::getNoKnockbackRounds)
+			Codec.INT.optionalFieldOf("no_knockback_rounds", 2).forGetter(DownpourConfig::getNoKnockbackRounds),
+			Codec.STRING.optionalFieldOf("statistic_bundle_namespace").forGetter(DownpourConfig::getStatisticBundleNamespace)
 		).apply(instance, DownpourConfig::new);
 	});
 
@@ -33,8 +38,9 @@ public class DownpourConfig {
 	private final int lockTime;
 	private final int unlockTime;
 	private final int noKnockbackRounds;
+	private final Optional<String> statisticBundleNamespace;
 
-	public DownpourConfig(DownpourMapConfig mapConfig, PlayerConfig playerConfig, IntProvider ticksUntilClose, SoundEvent lockSound, SoundEvent unlockSound, int lockTime, int unlockTime, int noKnockbackRounds) {
+	public DownpourConfig(DownpourMapConfig mapConfig, PlayerConfig playerConfig, IntProvider ticksUntilClose, SoundEvent lockSound, SoundEvent unlockSound, int lockTime, int unlockTime, int noKnockbackRounds, Optional<String> statisticBundleNamespace) {
 		this.mapConfig = mapConfig;
 		this.playerConfig = playerConfig;
 		this.ticksUntilClose = ticksUntilClose;
@@ -43,6 +49,7 @@ public class DownpourConfig {
 		this.lockTime = lockTime;
 		this.unlockTime = unlockTime;
 		this.noKnockbackRounds = noKnockbackRounds;
+		this.statisticBundleNamespace = statisticBundleNamespace;
 	}
 
 	public DownpourMapConfig getMapConfig() {
@@ -75,5 +82,17 @@ public class DownpourConfig {
 
 	public int getNoKnockbackRounds() {
 		return this.noKnockbackRounds;
+	}
+
+	public Optional<String> getStatisticBundleNamespace() {
+		return this.statisticBundleNamespace;
+	}
+
+	public GameStatisticBundle getStatisticBundle(GameSpace gameSpace) {
+		return this.statisticBundleNamespace
+			.map(namespace -> {
+				return gameSpace.getStatistics().bundle(namespace);
+			})
+			.orElse(null);
 	}
 }

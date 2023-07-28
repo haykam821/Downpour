@@ -68,7 +68,7 @@ public class DownpourActivePhase {
 		this.ticksUntilSwitch = this.config.getLockTime();
 		this.createShelter();
 
-		this.statistics = gameSpace.getStatistics().bundle(Main.MOD_ID);
+		this.statistics = config.getStatisticBundle(gameSpace);
 	}
 
 	public static void setRules(GameActivity activity) {
@@ -121,7 +121,7 @@ public class DownpourActivePhase {
 				this.updateRoundsExperienceLevel(player);
 				player.changeGameMode(GameMode.ADVENTURE);
 
-				if (!this.singleplayer) {
+				if (!this.singleplayer && this.statistics != null) {
 					this.statistics.forPlayer(player).increment(StatisticKeys.GAMES_PLAYED, 1);
 				}
 
@@ -166,8 +166,10 @@ public class DownpourActivePhase {
 			this.updateRoundsExperienceLevel(player);
 		}
 
-		for (PlayerRef player : this.players) {
-			this.statistics.forPlayer(player).increment(Main.ROUNDS_SURVIVED, rounds);
+		if (!this.singleplayer && this.statistics != null) {
+			for (PlayerRef player : this.players) {
+				this.statistics.forPlayer(player).increment(Main.ROUNDS_SURVIVED, rounds);
+			}
 		}
 	}
 
@@ -305,14 +307,14 @@ public class DownpourActivePhase {
 	}
 
 	public void applyPlayerFinishStatistics(ServerPlayerEntity player, StatisticKey<Integer> finishTypeKey) {
-		if (!this.singleplayer) {
+		if (!this.singleplayer && this.statistics != null) {
 			this.statistics.forPlayer(player).increment(finishTypeKey, 1);
 			this.statistics.forPlayer(player).set(StatisticKeys.LONGEST_TIME, this.ticksElapsed);
 		}
 	}
 
 	private ActionResult onPlayerAttackEntity(ServerPlayerEntity attacker, Hand hand, Entity attacked, EntityHitResult hitResult) {
-		if (!this.isGameEnding() && attacker != attacked && this.players.contains(PlayerRef.of(attacker))) {
+		if (!this.isGameEnding() && attacker != attacked && this.players.contains(PlayerRef.of(attacker)) && !this.singleplayer && this.statistics != null) {
 			ServerPlayerEntity attackedPlayer = (ServerPlayerEntity) attacked;
 			if (this.players.contains(PlayerRef.of(attackedPlayer))) {
 				this.statistics.forPlayer(attacker).increment(Main.PLAYERS_PUNCHED, 1);
