@@ -26,7 +26,7 @@ public class DownpourConfig {
 			Codec.INT.optionalFieldOf("lock_time", 20 * 7).forGetter(DownpourConfig::getLockTime),
 			Codec.INT.optionalFieldOf("unlock_time", 20 * 2).forGetter(DownpourConfig::getUnlockTime),
 			Codec.INT.optionalFieldOf("no_knockback_rounds", 2).forGetter(DownpourConfig::getNoKnockbackRounds),
-			Codec.STRING.optionalFieldOf("statistic_bundle_namespace").forGetter(DownpourConfig::getStatisticBundleNamespace)
+			GameStatisticBundle.NAMESPACE_CODEC.optionalFieldOf("statistic_bundle_namespace").forGetter(DownpourConfig::getStatisticBundleNamespace)
 		).apply(instance, DownpourConfig::new);
 	});
 
